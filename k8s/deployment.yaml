@@ -1,0 +1,58 @@
+# ── Kubernetes Deployment ────────────────────────────────────────────────────
+# This tells Kubernetes: "Run 3 copies of our app and keep them healthy"
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-demo-app
+  labels:
+    app: k8s-demo
+
+spec:
+  # Run 3 copies (pods) — scale this up/down to show sir
+  replicas: 3
+
+  selector:
+    matchLabels:
+      app: k8s-demo
+
+  # Rolling update strategy — zero downtime updates
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1   # Only 1 pod can be down during update
+      maxSurge: 1         # Can create 1 extra pod during update
+
+  template:
+    metadata:
+      labels:
+        app: k8s-demo
+    spec:
+      containers:
+        - name: k8s-demo
+          image: k8s-demo:v1   # Our Docker image
+          ports:
+            - containerPort: 3000
+
+          # ── Resource limits (Linux cgroups enforces these) ──────────────
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "50m"
+            limits:
+              memory: "64Mi"    # Linux cgroups will kill container if exceeded
+              cpu: "100m"
+
+          # ── Health checks — K8s uses these to detect crashes ────────────
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10     # Check every 10 seconds
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 3
+            periodSeconds: 5

@@ -1,0 +1,52 @@
+# ── Kubernetes Deployment v2 ──────────────────────────────────────────────────
+# Used to demonstrate ROLLING UPDATE to sir
+# Change: image tag v1 → v2, replicas 3 → 5
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-demo-app
+  labels:
+    app: k8s-demo
+
+spec:
+  replicas: 5   # Scaled UP from 3 to 5
+
+  selector:
+    matchLabels:
+      app: k8s-demo
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+
+  template:
+    metadata:
+      labels:
+        app: k8s-demo
+    spec:
+      containers:
+        - name: k8s-demo
+          image: k8s-demo:v2   # Updated image version
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "50m"
+            limits:
+              memory: "64Mi"
+              cpu: "100m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 3
+            periodSeconds: 5

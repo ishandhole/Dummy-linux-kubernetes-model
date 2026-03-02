@@ -1,0 +1,16 @@
+# ── Kubernetes Service ────────────────────────────────────────────────────────
+# This exposes our app to the outside world
+# K8s Service automatically load-balances traffic across all 3 pods
+apiVersion: v1
+kind: Service
+metadata:
+  name: k8s-demo-service
+spec:
+  type: NodePort          # Makes it accessible from browser on localhost
+  selector:
+    app: k8s-demo         # Routes traffic to pods with this label
+  ports:
+    - protocol: TCP
+      port: 80            # Service port
+      targetPort: 3000    # Container port
+      nodePort: 30080     # Access via localhost:30080 in browser
